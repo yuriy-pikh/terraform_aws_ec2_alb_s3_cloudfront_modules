@@ -142,9 +142,9 @@ Let's use the `integration` environment as an example. Remember to replace `inte
     * **Frontend:** `https://<your_domain_name_app>` (e.g., `https://app.integration.yuriypikh.site`)
     * **Backend:** `https://<your_domain_name_api>` (e.g., `https://api.integration.yuriypikh.site`). Note that this endpoint, based on the description, will likely only display a default "Hello World" message from the EC2 instances behind the Application Load Balancer (ALB) as no specific application logic has been defined in this configuration.
 
-10.  **To Destroy the Infrastructure (for an environment):**
+10. **To Destroy the Infrastructure (for an environment):**
 
-    **Warning:** This action will permanently delete all AWS resources managed by Terraform within the specified environment. Exercise extreme caution when running this command.
+    **Warning:** This will delete all resources managed by Terraform in that environment.
 
     ```bash
     cd environments/integration # Or staging/prod
@@ -152,6 +152,6 @@ Let's use the `integration` environment as an example. Remember to replace `inte
     # Or simply `terraform destroy`
     ```
 
-    Type `yes` when prompted to confirm the destruction of the infrastructure.
+    Type `yes` when prompted.
 
-    Remember to manually remove or revert the NS record changes you made at your domain registrar if you destroy the infrastructure and no longer want AWS to manage DNS for those domains.
+    Remember to remove/revert the NS record changes at your domain registrar if you destroy the infrastructure and no longer want AWS to manage DNS for those domains.
