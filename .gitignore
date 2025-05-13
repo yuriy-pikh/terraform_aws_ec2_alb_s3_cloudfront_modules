@@ -1,0 +1,53 @@
+# Terraform files
+.terraform
+terraform.tfstate
+terraform.tfstate.*
+*.tfvars
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Crash log files
+crash.log
+*.crash.log
+
+# Ignore AWS credentials locally (not recommended for production)
+# *.aws.credentials
+# *.tfvars.example
+
+# Temporary files and directories
+*~
+.#*
+tmp/
+temp/
+.tmp*
+
+# IDE specific files
+.idea/
+.vscode/
+*.iml
+*.pyc
+__pycache__/
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# Packages
+node_modules/
+vendor/
+
+# Log files
+*.log
+
+# Terraform plan files (optional, but good to ignore if you don't commit them)
+*.tfplan
+
+# Sensitive data (ensure you are not accidentally committing these)
+secrets.tfvars
+*.key
+*.pem
+
+# Other environment-specific files you might create
+.env
