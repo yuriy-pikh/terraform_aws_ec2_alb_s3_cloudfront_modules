@@ -19,13 +19,13 @@ resource "aws_security_group" "web_sg" {
 }
 
 resource "aws_launch_template" "web_lt" {
-  name_prefix   = "new-web-template-"
+  name_prefix   = "web-template-${var.env_name}"
   image_id      = var.ami_id
   instance_type = var.instance_type
 
   user_data = base64encode(<<-EOF
 #!/bin/bash
-echo "<h1>Hello World!</h1>" > index.html
+echo "<h1>Hello World from ${var.env_name}!</h1>" > index.html
 nohup python3 -m http.server 80 > server.log 2>&1 &
 EOF
 )

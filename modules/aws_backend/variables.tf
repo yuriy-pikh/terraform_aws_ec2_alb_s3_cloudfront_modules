@@ -1,13 +1,12 @@
 variable "domain_name_api" {
   type        = string
   description = "The domain name for the API (e.g., api.example.com)."
-  # Default removed to encourage explicit setting from environment
 }
 
-# variable "region" { # This is no longer needed as the module inherits the provider config
-#   type    = string
-#   default = "us-east-1"
-# }
+variable "env_name" {
+  description = "The name of the environment (e.g., dev, staging, prod)."
+  type        = string
+}
 
 variable "vpc_cidr" {
   type        = string
