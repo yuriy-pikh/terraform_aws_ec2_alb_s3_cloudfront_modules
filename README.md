@@ -65,8 +65,6 @@ Let's use the `integration` environment as an example. Remember to replace `inte
 
 5.  **Delegate DNS - CRITICAL STEP:**
 
-    This step is essential for your domains to resolve correctly to your AWS infrastructure and for ACM certificate validation to succeed.
-
     * **For `domain_name_app` (e.g., `app.integration.yuriypikh.site`):**
         * Go to your domain parent hosted zone in Route53. Create NS (Name Server) records for `app.integration.yuriypikh.site` to point to the Name Servers provided in the `aws_frontend.route53_name_servers_info` output for the current environment or copy it directly from Route53.
 
@@ -95,13 +93,17 @@ Let's use the `integration` environment as an example. Remember to replace `inte
 
 7.  **Upload Website Content:**
 
-    To upload your website content (e.g., `index.html`) to the S3 bucket created for this environment go to data_for_s3 and relevent dir env name. Use the following command:
+    Navigate into the directory corresponding to your target environment. For example, if you want to upload to the integration environment, use:
+
+    ```bash
+    cd data_for_s3/integration
+    ```
+
+    Replace `<your_frontend_bucket_name>` with the actual name of the S3 bucket created by the `aws_frontend` module for this **specific environment** (e.g., `app.integration.yuriypikh.site-web`). You can find the bucket name in the Terraform state file or in the AWS S3 console after the deployment is complete.
 
     ```bash
     aws s3 cp index.html s3://<your_frontend_bucket_name>/index.html
     ```
-
-    Replace `<your_frontend_bucket_name>` with the actual name of the S3 bucket created by the `aws_frontend` module for this **specific environment** (e.g., `app.integration.yuriypikh.site-web`). You can find the bucket name in the Terraform state file or in the AWS S3 console after the deployment is complete.
 
 
 8.  **Test Your Endpoints:**
