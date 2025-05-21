@@ -1,9 +1,17 @@
+locals {
+  prefix = "${var.env}-route53-cert"
+  common_tags = {
+    Environment = var.env
+    ManagedBy   = "Terraform"
+  }
+}
+
 resource "aws_route53_zone" "main" {
-  name = var.domain_name_app
+  name         = var.domain_name_api
 }
 
 resource "aws_acm_certificate" "cert" {
-  domain_name       = var.domain_name_app
+  domain_name       = var.domain_name_api
   validation_method = "DNS"
 
   lifecycle {
@@ -11,7 +19,7 @@ resource "aws_acm_certificate" "cert" {
   }
 
   tags = {
-    Name = "TLS certificate for ${var.domain_name_app}"
+    Name = "TLS certificate for ${var.domain_name_api}"
   }
 }
 
@@ -34,17 +42,4 @@ resource "aws_route53_record" "cert_validation" {
 resource "aws_acm_certificate_validation" "cert_validation" {
   certificate_arn         = aws_acm_certificate.cert.arn
   validation_record_fqdns = [for record in aws_route53_record.cert_validation : record.fqdn]
-}
-
-
-resource "aws_route53_record" "site" {
-  zone_id = aws_route53_zone.main.zone_id
-  name    = var.domain_name_app
-  type    = "A"
-
-  alias {
-    name                   = aws_cloudfront_distribution.this.domain_name # Corrected: Use the CloudFront distribution's domain name
-    zone_id                = aws_cloudfront_distribution.this.hosted_zone_id # Correct: This is the CloudFront specific zone ID for alias records
-    evaluate_target_health = false
-  }
 }
