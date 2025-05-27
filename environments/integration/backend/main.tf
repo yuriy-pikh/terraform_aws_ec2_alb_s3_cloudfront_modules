@@ -11,7 +11,7 @@ data "terraform_remote_state" "network" {
   backend = "s3"
   config = {
     bucket = "my-tf-state-prod-45"
-    key    = "integration/network/terraform.tfstate"
+    key    = "prod/network/terraform.tfstate"
     region = "us-east-1"
   }
 }
@@ -20,7 +20,7 @@ data "terraform_remote_state" "route53_cert_api" {
   backend = "s3"
   config = {
     bucket = "my-tf-state-prod-45"
-    key    = "staging/route53_cert/terraform.tfstate"
+    key    = "integration/route53_cert/terraform.tfstate"
     region = "us-east-1"
   }
 }

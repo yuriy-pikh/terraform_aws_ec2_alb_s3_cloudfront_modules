@@ -31,7 +31,7 @@ variable "availability_zone_2" {
 variable "env" {
   type = string
   validation {
-    condition     = can(regex("^[a-z0-9]{2,10}$", var.env))
-    error_message = "env must be 2-10 lowercase alphanumeric characters"
+    condition     = can(regex("^[a-z0-9]{2,15}$", var.env))
+    error_message = "env must be 2-15 lowercase alphanumeric characters"
   }
 }

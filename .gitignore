@@ -52,3 +52,4 @@ secrets.tfvars
 
 # Other environment-specific files you might create
 .env
+deploy_all.sh
