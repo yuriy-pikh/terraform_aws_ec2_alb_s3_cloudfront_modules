@@ -42,7 +42,7 @@ resource "aws_launch_template" "web_lt" {
 echo "<h1>Hello World from ${var.env}!</h1>" > index.html
 nohup python3 -m http.server 80 > server.log 2>&1 &
 EOF
-)
+  )
 
   vpc_security_group_ids = [aws_security_group.web_sg.id]
 
@@ -55,7 +55,7 @@ EOF
 
   tag_specifications {
     resource_type = "volume"
-    tags = local.common_tags
+    tags          = local.common_tags
   }
 }
 
@@ -116,7 +116,7 @@ resource "aws_lb" "app_alb" {
 }
 
 resource "aws_lb_target_group" "app_tg" {
-  name             = "${local.prefix}-tg"
+  name        = "${local.prefix}-tg"
   port        = 80
   protocol    = "HTTP"
   vpc_id      = var.vpc_id

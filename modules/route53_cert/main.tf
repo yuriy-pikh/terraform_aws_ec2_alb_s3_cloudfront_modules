@@ -7,7 +7,7 @@ locals {
 }
 
 resource "aws_route53_zone" "main" {
-  name         = var.domain_name_api
+  name = var.domain_name_api
 }
 
 resource "aws_acm_certificate" "cert" {
