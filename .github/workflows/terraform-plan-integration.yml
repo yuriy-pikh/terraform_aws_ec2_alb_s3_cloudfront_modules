@@ -1,0 +1,164 @@
+name: 'Terraform Plan: Integration Environment'
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  terraform_plan_integration:
+    name: 'Terraform Plan for Integration'
+    runs-on: ubuntu-latest
+    env:
+      TF_INTEGRATION_DIR: './terraform_aws_ec2_alb_s3_cloudfront_modules/environments/integration'
+      AWS_REGION: 'us-east-1'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+    #   # --- TODO: Add AWS OIDC ---
+    #   - name: Configure AWS credentials (OIDC)
+    #     uses: aws-actions/configure-aws-credentials@v4
+    #     with:
+    #       role-to-assume: arn:aws:iam::YOUR_AWS_ACCOUNT_ID:role/GitHubActionsTerraformRole # ЗАМІНИ НА СВІЙ ARN
+    #       aws-region: ${{ env.AWS_DEFAULT_REGION }}
+
+      - name: Configure AWS credentials (Access Keys)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.2.1
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+        working-directory: ./terraform_aws_ec2_alb_s3_cloudfront_modules
+
+      # Integration: route53_cert
+      - name: Terraform Init (integration/route53_cert)
+        id: init_route53_cert_integration
+        run: terraform init -input=false
+        working-directory: ${{ env.TF_INTEGRATION_DIR }}/route53_cert
+        continue-on-error: true
+
+      - name: Terraform Plan (integration/route53_cert)
+        id: plan_route53_cert_integration
+        # `tf_actions_plan_exit_code` 0 NO CAHNGES 1 ERROR  2 CHANGES
+        run: |
+          terraform plan -input=false -no-color -detailed-exitcode \
+            -var="aws_region=${{ env.AWS_REGION }}" \
+            > route53_cert_integration.plan
+          echo "tf_actions_plan_exit_code=$?" >> $GITHUB_OUTPUT
+        working-directory: ${{ env.TF_INTEGRATION_DIR }}/route53_cert
+        continue-on-error: true
+
+      # Integration: frontend
+      - name: Terraform Init (integration/frontend)
+        id: init_frontend_integration
+        run: terraform init -input=false
+        working-directory: ${{ env.TF_INTEGRATION_DIR }}/frontend
+        continue-on-error: true
+
+      - name: Terraform Plan (integration/frontend)
+        id: plan_frontend_integration
+        run: |
+          terraform plan -input=false -no-color -detailed-exitcode \
+            -var="aws_region=${{ env.AWS_REGION }}" \
+            > frontend_integration.plan
+          echo "tf_actions_plan_exit_code=$?" >> $GITHUB_OUTPUT
+        working-directory: ${{ env.TF_INTEGRATION_DIR }}/frontend
+        continue-on-error: true
+
+      # Integration: backend
+      - name: Terraform Init (integration/backend)
+        id: init_backend_integration
+        run: terraform init -input=false
+        working-directory: ${{ env.TF_INTEGRATION_DIR }}/backend
+        continue-on-error: true
+
+      - name: Terraform Plan (integration/backend)
+        id: plan_backend_integration
+        run: |
+          terraform plan -input=false -no-color -detailed-exitcode \
+            -var="aws_region=${{ env.AWS_REGION }}" \
+            > backend_integration.plan
+          echo "tf_actions_plan_exit_code=$?" >> $GITHUB_OUTPUT
+        working-directory: ${{ env.TF_INTEGRATION_DIR }}/backend
+        continue-on-error: true
+
+      - name: Prepare Plan Output for Comment
+        id: prepare_comment
+        run: |
+          comment_body="### Terraform Plan for Integration Environment\n\n"
+          comment_body+="<details><summary>Route53 & Cert Plan (integration)</summary>\n\n"
+          if [ "${{ steps.init_route53_cert_integration.outcome }}" == "failure" ]; then
+            comment_body+="\`\`\`\nTerraform Init FAILED for route53_cert\n\`\`\`\n"
+          elif [ "${{ steps.plan_route53_cert_integration.outputs.tf_actions_plan_exit_code }}" == "1" ]; then
+            comment_body+="\`\`\`\nTerraform Plan FAILED for route53_cert\n"
+            comment_body+="$(cat ${{ env.TF_INTEGRATION_DIR }}/route53_cert/route53_cert_integration.plan || echo 'Error reading plan file.')\n"
+            comment_body+="\`\`\`\n"
+          else
+            comment_body+="\`\`\`terraform\n"
+            comment_body+="$(cat ${{ env.TF_INTEGRATION_DIR }}/route53_cert/route53_cert_integration.plan || echo 'No changes or error reading plan file.')\n"
+            comment_body+="\`\`\`\n"
+          fi
+          comment_body+="</details>\n\n"
+
+          comment_body+="<details><summary>Frontend Plan (integration)</summary>\n\n"
+          if [ "${{ steps.init_frontend_integration.outcome }}" == "failure" ]; then
+            comment_body+="\`\`\`\nTerraform Init FAILED for frontend\n\`\`\`\n"
+          elif [ "${{ steps.plan_frontend_integration.outputs.tf_actions_plan_exit_code }}" == "1" ]; then
+            comment_body+="\`\`\`\nTerraform Plan FAILED for frontend\n"
+            comment_body+="$(cat ${{ env.TF_INTEGRATION_DIR }}/frontend/frontend_integration.plan || echo 'Error reading plan file.')\n"
+            comment_body+="\`\`\`\n"
+          else
+            comment_body+="\`\`\`terraform\n"
+            comment_body+="$(cat ${{ env.TF_INTEGRATION_DIR }}/frontend/frontend_integration.plan || echo 'No changes or error reading plan file.')\n"
+            comment_body+="\`\`\`\n"
+          fi
+          comment_body+="</details>\n\n"
+
+          comment_body+="<details><summary>Backend Plan (integration)</summary>\n\n"
+          if [ "${{ steps.init_backend_integration.outcome }}" == "failure" ]; then
+            comment_body+="\`\`\`\nTerraform Init FAILED for backend\n\`\`\`\n"
+          elif [ "${{ steps.plan_backend_integration.outputs.tf_actions_plan_exit_code }}" == "1" ]; then
+            comment_body+="\`\`\`\nTerraform Plan FAILED for backend\n"
+            comment_body+="$(cat ${{ env.TF_INTEGRATION_DIR }}/backend/backend_integration.plan || echo 'Error reading plan file.')\n"
+            comment_body+="\`\`\`\n"
+          else
+            comment_body+="\`\`\`terraform\n"
+            comment_body+="$(cat ${{ env.TF_INTEGRATION_DIR }}/backend/backend_integration.plan || echo 'No changes or error reading plan file.')\n"
+            comment_body+="\`\`\`\n"
+          fi
+          comment_body+="</details>\n\n"
+
+          MAX_LENGTH=60000
+          if [ ${#comment_body} -gt $MAX_LENGTH ]; then
+            comment_body="${comment_body:0:$MAX_LENGTH}...\n\n**Note: Plan output was truncated due to GitHub comment length limits.**"
+          fi
+          echo "comment<<EOF" >> $GITHUB_OUTPUT
+          echo "$comment_body" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Add Plan to PR Comment
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: terraform-plan-integration
+          message: ${{ steps.prepare_comment.outputs.comment }}
+
+      - name: Check for plan errors or changes
+        if: steps.plan_route53_cert_integration.outputs.tf_actions_plan_exit_code == '1' || steps.plan_frontend_integration.outputs.tf_actions_plan_exit_code == '1' || steps.plan_backend_integration.outputs.tf_actions_plan_exit_code == '1'
+        run: |
+          echo "::error::One or more Terraform plan steps failed or had errors."
+          exit 1
