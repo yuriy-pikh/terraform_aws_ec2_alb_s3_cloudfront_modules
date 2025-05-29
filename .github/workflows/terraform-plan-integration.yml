@@ -55,7 +55,6 @@ jobs:
         id: plan_route53_cert_integration
         run: |
           terraform plan -input=false -no-color -detailed-exitcode \
-            -var="aws_region=${{ env.AWS_REGION }}" \
             > route53_cert_integration.plan
           echo "tf_actions_plan_exit_code=$?" >> $GITHUB_OUTPUT
         working-directory: ${{ env.TF_INTEGRATION_DIR }}/route53_cert
@@ -72,7 +71,6 @@ jobs:
         id: plan_frontend_integration
         run: |
           terraform plan -input=false -no-color -detailed-exitcode \
-            -var="aws_region=${{ env.AWS_REGION }}" \
             > frontend_integration.plan
           echo "tf_actions_plan_exit_code=$?" >> $GITHUB_OUTPUT
         working-directory: ${{ env.TF_INTEGRATION_DIR }}/frontend
@@ -89,7 +87,6 @@ jobs:
         id: plan_backend_integration
         run: |
           terraform plan -input=false -no-color -detailed-exitcode \
-            -var="aws_region=${{ env.AWS_REGION }}" \
             > backend_integration.plan
           echo "tf_actions_plan_exit_code=$?" >> $GITHUB_OUTPUT
         working-directory: ${{ env.TF_INTEGRATION_DIR }}/backend
