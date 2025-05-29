@@ -95,55 +95,59 @@ jobs:
       - name: Prepare Plan Output for Comment
         id: prepare_comment
         run: |
-          comment_body="### Terraform Plan for Integration Environment\n\n"
-          comment_body+="<details><summary>Route53 & Cert Plan (integration)</summary>\n\n"
-          if [ "${{ steps.init_route53_cert_integration.outcome }}" == "failure" ]; then
-            comment_body+="\`\`\`\nTerraform Init FAILED for route53_cert\n\`\`\`\n"
-          elif [ "${{ steps.plan_route53_cert_integration.outputs.tf_actions_plan_exit_code }}" == "1" ]; then
-            comment_body+="\`\`\`\nTerraform Plan FAILED for route53_cert\n"
-            comment_body+="$(cat ${{ env.TF_INTEGRATION_DIR }}/route53_cert/route53_cert_integration.plan || echo 'Error reading plan file.')\n"
-            comment_body+="\`\`\`\n"
-          else
-            comment_body+="\`\`\`terraform\n"
-            comment_body+="$(cat ${{ env.TF_INTEGRATION_DIR }}/route53_cert/route53_cert_integration.plan || echo 'No changes or error reading plan file.')\n"
-            comment_body+="\`\`\`\n"
-          fi
-          comment_body+="</details>\n\n"
+          comment_body="### Terraform Plan for Integration Environment\n\n" # Один \n тут достатньо
 
-          comment_body+="<details><summary>Frontend Plan (integration)</summary>\n\n"
-          if [ "${{ steps.init_frontend_integration.outcome }}" == "failure" ]; then
-            comment_body+="\`\`\`\nTerraform Init FAILED for frontend\n\`\`\`\n"
-          elif [ "${{ steps.plan_frontend_integration.outputs.tf_actions_plan_exit_code }}" == "1" ]; then
-            comment_body+="\`\`\`\nTerraform Plan FAILED for frontend\n"
-            comment_body+="$(cat ${{ env.TF_INTEGRATION_DIR }}/frontend/frontend_integration.plan || echo 'Error reading plan file.')\n"
-            comment_body+="\`\`\`\n"
-          else
-            comment_body+="\`\`\`terraform\n"
-            comment_body+="$(cat ${{ env.TF_INTEGRATION_DIR }}/frontend/frontend_integration.plan || echo 'No changes or error reading plan file.')\n"
-            comment_body+="\`\`\`\n"
-          fi
-          comment_body+="</details>\n\n"
+          # Функція для форматування виводу плану
+          format_plan_output() {
+            local component_name="$1"
+            local init_outcome="$2"
+            local plan_exit_code="$3"
+            local plan_file_path="$4"
+            local output=""
 
-          comment_body+="<details><summary>Backend Plan (integration)</summary>\n\n"
-          if [ "${{ steps.init_backend_integration.outcome }}" == "failure" ]; then
-            comment_body+="\`\`\`\nTerraform Init FAILED for backend\n\`\`\`\n"
-          elif [ "${{ steps.plan_backend_integration.outputs.tf_actions_plan_exit_code }}" == "1" ]; then
-            comment_body+="\`\`\`\nTerraform Plan FAILED for backend\n"
-            comment_body+="$(cat ${{ env.TF_INTEGRATION_DIR }}/backend/backend_integration.plan || echo 'Error reading plan file.')\n"
-            comment_body+="\`\`\`\n"
-          else
-            comment_body+="\`\`\`terraform\n"
-            comment_body+="$(cat ${{ env.TF_INTEGRATION_DIR }}/backend/backend_integration.plan || echo 'No changes or error reading plan file.')\n"
-            comment_body+="\`\`\`\n"
-          fi
-          comment_body+="</details>\n\n"
+            output+="<details><summary>${component_name} Plan (integration)</summary>\n\n" # Один \n
+            if [ "${init_outcome}" == "failure" ]; then
+              output+="\`\`\`text\nTerraform Init FAILED for ${component_name}\n\`\`\`\n"
+            elif [ "${plan_exit_code}" == "1" ]; then
+              output+="\`\`\`text\nTerraform Plan FAILED for ${component_name}:\n" # Повідомлення про помилку плану
+              output+="$(cat ${plan_file_path} 2>/dev/null || echo 'Error reading plan file or plan file is empty.')\n" # Читаємо вміст файлу
+              output+="\`\`\`\n"
+            elif [ ! -s "${plan_file_path}" ] && [ "${plan_exit_code}" == "0" ]; then # Якщо файл порожній І exit code 0 (немає змін)
+              output+="\`\`\`text\nNo changes. Your infrastructure matches the configuration.\n\`\`\`\n"
+            elif [ ! -s "${plan_file_path}" ] && [ "${plan_exit_code}" == "2" ]; then # Якщо файл порожній І exit code 2 (мали бути зміни, але файл порожній - дивно)
+              output+="\`\`\`text\nPlan indicates changes, but the plan output file is empty. Please check logs.\n\`\`\`\n"
+            else # Якщо є вміст у файлі
+              output+="\`\`\`terraform\n"
+              output+="$(cat ${plan_file_path} 2>/dev/null || echo 'Error reading plan file.')\n"
+              output+="\`\`\`\n"
+            fi
+            output+="</details>\n\n" # Один \n
+            echo -n "$output" # Використовуємо echo -n, щоб уникнути зайвого \n від самого echo
+          }
+
+          comment_body+=$(format_plan_output "Route53 & Cert" \
+            "${{ steps.init_route53_cert_integration.outcome }}" \
+            "${{ steps.plan_route53_cert_integration.outputs.tf_actions_plan_exit_code }}" \
+            "${{ env.TF_INTEGRATION_DIR }}/route53_cert/route53_cert_integration.plan")
+
+          comment_body+=$(format_plan_output "Frontend" \
+            "${{ steps.init_frontend_integration.outcome }}" \
+            "${{ steps.plan_frontend_integration.outputs.tf_actions_plan_exit_code }}" \
+            "${{ env.TF_INTEGRATION_DIR }}/frontend/frontend_integration.plan")
+
+          comment_body+=$(format_plan_output "Backend" \
+            "${{ steps.init_backend_integration.outcome }}" \
+            "${{ steps.plan_backend_integration.outputs.tf_actions_plan_exit_code }}" \
+            "${{ env.TF_INTEGRATION_DIR }}/backend/backend_integration.plan")
 
           MAX_LENGTH=60000
           if [ ${#comment_body} -gt $MAX_LENGTH ]; then
             comment_body="${comment_body:0:$MAX_LENGTH}...\n\n**Note: Plan output was truncated due to GitHub comment length limits.**"
           fi
+          # comment_body=$(echo -e "${comment_body}" | sed '/^$/N;/^\n$/D') # Видаляє послідовні порожні рядки
+
           echo "comment<<EOF" >> $GITHUB_OUTPUT
-          echo "$comment_body" >> $GITHUB_OUTPUT
+          echo -e "${comment_body}" >> $GITHUB_OUTPUT # Використовуємо echo -e для обробки \n
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Add Plan to PR Comment
