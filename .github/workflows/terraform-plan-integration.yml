@@ -15,7 +15,7 @@ jobs:
     name: 'Terraform Plan for Integration'
     runs-on: ubuntu-latest
     env:
-      TF_INTEGRATION_DIR: './terraform_aws_ec2_alb_s3_cloudfront_modules/environments/integration'
+      TF_INTEGRATION_DIR: './environments/integration'
       AWS_REGION: 'us-east-1'
 
     steps:
@@ -43,7 +43,6 @@ jobs:
 
       - name: Terraform Format Check
         run: terraform fmt -check -recursive
-        working-directory: ./terraform_aws_ec2_alb_s3_cloudfront_modules
 
       # Integration: route53_cert
       - name: Terraform Init (integration/route53_cert)
@@ -54,7 +53,6 @@ jobs:
 
       - name: Terraform Plan (integration/route53_cert)
         id: plan_route53_cert_integration
-        # `tf_actions_plan_exit_code` 0 NO CAHNGES 1 ERROR  2 CHANGES
         run: |
           terraform plan -input=false -no-color -detailed-exitcode \
             -var="aws_region=${{ env.AWS_REGION }}" \
