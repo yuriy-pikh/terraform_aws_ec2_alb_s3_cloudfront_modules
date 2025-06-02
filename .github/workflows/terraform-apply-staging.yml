@@ -1,20 +1,20 @@
-name: 'Terraform Apply: Prod Environment'
+name: 'Terraform Apply: Staging Environment'
 
 on:
   push:
     branches:
-      - release
+      - candidate
 
 permissions:
   contents: read
 
 jobs:
-  terraform_apply_prod:
-    name: 'Terraform Apply for prod'
+  terraform_apply_staging:
+    name: 'Terraform Apply for staging'
     runs-on: ubuntu-latest
-    environment: prod
+    environment: staging
     env:
-      TF_PROD_DIR: './environments/prod'
+      TF_STAGING_DIR: './environments/staging'
       AWS_REGION: 'us-east-1'
 
     steps:
@@ -43,27 +43,27 @@ jobs:
       - name: Terraform Format Check
         run: terraform fmt -check -recursive
 
-      - name: Terraform Init & Apply (prod/route53_cert)
+      - name: Terraform Init & Apply (staging/route53_cert)
         run: |
           terraform init -input=false
           terraform apply -auto-approve -input=false
-        working-directory: ${{ env.TF_PROD_DIR }}/route53_cert
+        working-directory: ${{ env.TF_STAGING_DIR }}/route53_cert
 
-      - name: Terraform Init & Apply (prod/frontend)
+      - name: Terraform Init & Apply (staging/frontend)
         run: |
           terraform init -input=false
           terraform apply -auto-approve -input=false
-        working-directory: ${{ env.TF_PROD_DIR }}/frontend
+        working-directory: ${{ env.TF_STAGING_DIR }}/frontend
 
-      - name: Terraform Init & Apply (prod/backend)
+      - name: Terraform Init & Apply (staging/backend)
         run: |
           terraform init -input=false
           terraform apply -auto-approve -input=false
-        working-directory: ${{ env.TF_PROD_DIR }}/backend
+        working-directory: ${{ env.TF_STAGING_DIR }}/backend
 
       # --- TODO: send notification to slack ---
       # - name: Send Slack Notification
       #   uses: rtCamp/action-slack-notify@v2
       #   env:
       #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-      #     SLACK_MESSAGE: 'Terraform Apply for Prod environment completed successfully for commit ${{ github.sha }}'
+      #     SLACK_MESSAGE: 'Terraform Apply for Staging environment completed successfully for commit ${{ github.sha }}'

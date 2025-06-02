@@ -1,9 +1,9 @@
-name: 'Terraform Plan: Prod Environment'
+name: 'Terraform Plan: Staging Environment'
 
 on:
   pull_request:
     branches:
-      - release
+      - candidate
     types: [opened, synchronize, reopened]
 
 permissions:
@@ -11,12 +11,12 @@ permissions:
   pull-requests: write
 
 jobs:
-  terraform_plan_prod:
-    name: 'Terraform Plan for Prod'
+  terraform_plan_staging:
+    name: 'Terraform Plan for Staging'
     runs-on: ubuntu-latest
-    environment: prod
+    environment: staging
     env:
-      TF_PROD_DIR: './environments/prod'
+      TF_STAGING_DIR: './environments/staging'
       AWS_REGION: 'us-east-1'
 
     steps:
@@ -45,58 +45,58 @@ jobs:
       - name: Terraform Format Check
         run: terraform fmt -check -recursive
 
-      # Prod: route53_cert
-      - name: Terraform Init (prod/route53_cert)
-        id: init_route53_cert_prod
+      # Staging: route53_cert
+      - name: Terraform Init (staging/route53_cert)
+        id: init_route53_cert_staging
         run: terraform init -input=false
-        working-directory: ${{ env.TF_PROD_DIR }}/route53_cert
+        working-directory: ${{ env.TF_STAGING_DIR }}/route53_cert
         continue-on-error: true
 
-      - name: Terraform Plan (prod/route53_cert)
-        id: plan_route53_cert_prod
+      - name: Terraform Plan (staging/route53_cert)
+        id: plan_route53_cert_staging
         run: |
           terraform plan -input=false -no-color -detailed-exitcode \
-            > route53_cert_prod.plan
+            > route53_cert_staging.plan
           echo "tf_actions_plan_exit_code=$?" >> $GITHUB_OUTPUT
-        working-directory: ${{ env.TF_PROD_DIR }}/route53_cert
+        working-directory: ${{ env.TF_STAGING_DIR }}/route53_cert
         continue-on-error: true
 
-      # Prod: frontend
-      - name: Terraform Init (prod/frontend)
-        id: init_frontend_prod
+      # Staging: frontend
+      - name: Terraform Init (staging/frontend)
+        id: init_frontend_staging
         run: terraform init -input=false
-        working-directory: ${{ env.TF_PROD_DIR }}/frontend
+        working-directory: ${{ env.TF_STAGING_DIR }}/frontend
         continue-on-error: true
 
-      - name: Terraform Plan (prod/frontend)
-        id: plan_frontend_prod
+      - name: Terraform Plan (staging/frontend)
+        id: plan_frontend_staging
         run: |
           terraform plan -input=false -no-color -detailed-exitcode \
-            > frontend_prod.plan
+            > frontend_staging.plan
           echo "tf_actions_plan_exit_code=$?" >> $GITHUB_OUTPUT
-        working-directory: ${{ env.TF_PROD_DIR }}/frontend
+        working-directory: ${{ env.TF_STAGING_DIR }}/frontend
         continue-on-error: true
 
-      # Prod: backend
-      - name: Terraform Init (prod/backend)
-        id: init_backend_prod
+      # Staging: backend
+      - name: Terraform Init (staging/backend)
+        id: init_backend_staging
         run: terraform init -input=false
-        working-directory: ${{ env.TF_PROD_DIR }}/backend
+        working-directory: ${{ env.TF_STAGING_DIR }}/backend
         continue-on-error: true
 
-      - name: Terraform Plan (prod/backend)
-        id: plan_backend_prod
+      - name: Terraform Plan (staging/backend)
+        id: plan_backend_staging
         run: |
           terraform plan -input=false -no-color -detailed-exitcode \
-            > backend_prod.plan
+            > backend_staging.plan
           echo "tf_actions_plan_exit_code=$?" >> $GITHUB_OUTPUT
-        working-directory: ${{ env.TF_PROD_DIR }}/backend
+        working-directory: ${{ env.TF_STAGING_DIR }}/backend
         continue-on-error: true
 
       - name: Prepare Plan Output for Comment
         id: prepare_comment
         run: |
-          comment_body="### Terraform Plan for Prod Environment\n\n" # Один \n тут достатньо
+          comment_body="### Terraform Plan for Staging Environment\n\n" # Один \n тут достатньо
 
           # Функція для форматування виводу плану
           format_plan_output() {
@@ -106,7 +106,7 @@ jobs:
             local plan_file_path="$4"
             local output=""
 
-            output+="<details><summary>${component_name} Plan (prod)</summary>\n\n" # Один \n
+            output+="<details><summary>${component_name} Plan (staging)</summary>\n\n" # Один \n
             if [ "${init_outcome}" == "failure" ]; then
               output+="\`\`\`text\nTerraform Init FAILED for ${component_name}\n\`\`\`\n"
             elif [ "${plan_exit_code}" == "1" ]; then
@@ -127,19 +127,19 @@ jobs:
           }
 
           comment_body+=$(format_plan_output "Route53 & Cert" \
-            "${{ steps.init_route53_cert_prod.outcome }}" \
-            "${{ steps.plan_route53_cert_prod.outputs.tf_actions_plan_exit_code }}" \
-            "${{ env.TF_PROD_DIR }}/route53_cert/route53_cert_prod.plan")
+            "${{ steps.init_route53_cert_staging.outcome }}" \
+            "${{ steps.plan_route53_cert_staging.outputs.tf_actions_plan_exit_code }}" \
+            "${{ env.TF_STAGING_DIR }}/route53_cert/route53_cert_staging.plan")
 
           comment_body+=$(format_plan_output "Frontend" \
-            "${{ steps.init_frontend_prod.outcome }}" \
-            "${{ steps.plan_frontend_prod.outputs.tf_actions_plan_exit_code }}" \
-            "${{ env.TF_PROD_DIR }}/frontend/frontend_prod.plan")
+            "${{ steps.init_frontend_staging.outcome }}" \
+            "${{ steps.plan_frontend_staging.outputs.tf_actions_plan_exit_code }}" \
+            "${{ env.TF_STAGING_DIR }}/frontend/frontend_staging.plan")
 
           comment_body+=$(format_plan_output "Backend" \
-            "${{ steps.init_backend_prod.outcome }}" \
-            "${{ steps.plan_backend_prod.outputs.tf_actions_plan_exit_code }}" \
-            "${{ env.TF_PROD_DIR }}/backend/backend_prod.plan")
+            "${{ steps.init_backend_staging.outcome }}" \
+            "${{ steps.plan_backend_staging.outputs.tf_actions_plan_exit_code }}" \
+            "${{ env.TF_STAGING_DIR }}/backend/backend_staging.plan")
 
           MAX_LENGTH=60000
           if [ ${#comment_body} -gt $MAX_LENGTH ]; then
@@ -154,11 +154,11 @@ jobs:
       - name: Add Plan to PR Comment
         uses: marocchino/sticky-pull-request-comment@v2
         with:
-          header: terraform-plan-prod
+          header: terraform-plan-staging
           message: ${{ steps.prepare_comment.outputs.comment }}
 
       - name: Check for plan errors or changes
-        if: steps.plan_route53_cert_prod.outputs.tf_actions_plan_exit_code == '1' || steps.plan_frontend_prod.outputs.tf_actions_plan_exit_code == '1' || steps.plan_backend_prod.outputs.tf_actions_plan_exit_code == '1'
+        if: steps.plan_route53_cert_staging.outputs.tf_actions_plan_exit_code == '1' || steps.plan_frontend_staging.outputs.tf_actions_plan_exit_code == '1' || steps.plan_backend_staging.outputs.tf_actions_plan_exit_code == '1'
         run: |
           echo "::error::One or more Terraform plan steps failed or had errors."
           exit 1

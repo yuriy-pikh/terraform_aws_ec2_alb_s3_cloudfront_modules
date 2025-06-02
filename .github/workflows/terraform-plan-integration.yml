@@ -5,6 +5,10 @@ on:
     branches:
       - main
     types: [opened, synchronize, reopened]
+    paths:
+      - 'environments/integration/**'
+      - '.github/workflows/terraform-apply-integration.yml'
+
 
 permissions:
   contents: read
