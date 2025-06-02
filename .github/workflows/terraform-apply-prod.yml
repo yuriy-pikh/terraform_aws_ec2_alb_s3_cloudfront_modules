@@ -1,0 +1,69 @@
+name: 'Terraform Apply: Prod Environment'
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  terraform_apply_prod:
+    name: 'Terraform Apply for prod'
+    runs-on: ubuntu-latest
+    environment: prod
+    env:
+      TF_PROD_DIR: './environments/prod'
+      AWS_REGION: 'us-east-1'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+    #     # --- TODO: Add AWS OIDC ---
+    #   - name: Configure AWS credentials (OIDC)
+    #     uses: aws-actions/configure-aws-credentials@v4
+    #     with:
+    #       role-to-assume: arn:aws:iam::YOUR_AWS_ACCOUNT_ID:role/GitHubActionsTerraformApplyRole # Створіть окрему роль для apply
+    #       aws-region: ${{ env.AWS_REGION }}
+
+      - name: Configure AWS credentials (Access Keys)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.2.1
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Init & Apply (prod/route53_cert)
+        run: |
+          terraform init -input=false
+          terraform apply -auto-approve -input=false
+        working-directory: ${{ env.TF_PROD_DIR }}/route53_cert
+
+      - name: Terraform Init & Apply (prod/frontend)
+        run: |
+          terraform init -input=false
+          terraform apply -auto-approve -input=false
+        working-directory: ${{ env.TF_PROD_DIR }}/frontend
+
+      - name: Terraform Init & Apply (prod/backend)
+        run: |
+          terraform init -input=false
+          terraform apply -auto-approve -input=false
+        working-directory: ${{ env.TF_PROD_DIR }}/backend
+
+      # --- TODO: send notification to slack ---
+      # - name: Send Slack Notification
+      #   uses: rtCamp/action-slack-notify@v2
+      #   env:
+      #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      #     SLACK_MESSAGE: 'Terraform Apply for Prod environment completed successfully for commit ${{ github.sha }}'
