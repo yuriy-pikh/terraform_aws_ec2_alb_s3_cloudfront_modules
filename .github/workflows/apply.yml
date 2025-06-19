@@ -13,12 +13,12 @@ on:
           - prod
 
 jobs:
-  # --- Integration Environment ---
   apply-integration-route53:
     name: 'Apply: integration/route53_cert'
     if: github.event.inputs.environment == 'integration'
     uses: ./.github/workflows/reusable-terraform.yml
     with:
+      environment_name: integration
       command: 'apply'
       working-directory: 'environments/integration/route53_cert'
     secrets: inherit
@@ -29,6 +29,7 @@ jobs:
     needs: apply-integration-route53
     uses: ./.github/workflows/reusable-terraform.yml
     with:
+      environment_name: integration
       command: 'apply'
       working-directory: 'environments/integration/backend'
     secrets: inherit
@@ -39,16 +40,17 @@ jobs:
     needs: apply-integration-route53
     uses: ./.github/workflows/reusable-terraform.yml
     with:
+      environment_name: integration
       command: 'apply'
       working-directory: 'environments/integration/frontend'
     secrets: inherit
 
-  # --- Staging Environment ---
   apply-staging-route53:
     name: 'Apply: staging/route53_cert'
     if: github.event.inputs.environment == 'staging'
     uses: ./.github/workflows/reusable-terraform.yml
     with:
+      environment_name: staging
       command: 'apply'
       working-directory: 'environments/staging/route53_cert'
     secrets: inherit
@@ -59,6 +61,7 @@ jobs:
     needs: apply-staging-route53
     uses: ./.github/workflows/reusable-terraform.yml
     with:
+      environment_name: staging
       command: 'apply'
       working-directory: 'environments/staging/backend'
     secrets: inherit
@@ -69,16 +72,17 @@ jobs:
     needs: apply-staging-route53
     uses: ./.github/workflows/reusable-terraform.yml
     with:
+      environment_name: staging
       command: 'apply'
       working-directory: 'environments/staging/frontend'
     secrets: inherit
 
-  # --- Production Environment ---
   apply-prod-network:
     name: 'Apply: prod/network'
     if: github.event.inputs.environment == 'prod'
     uses: ./.github/workflows/reusable-terraform.yml
     with:
+      environment_name: prod
       command: 'apply'
       working-directory: 'environments/prod/network'
     secrets: inherit
@@ -89,6 +93,7 @@ jobs:
     needs: apply-prod-network
     uses: ./.github/workflows/reusable-terraform.yml
     with:
+      environment_name: prod
       command: 'apply'
       working-directory: 'environments/prod/route53_cert'
     secrets: inherit
@@ -99,6 +104,7 @@ jobs:
     needs: [apply-prod-network, apply-prod-route53]
     uses: ./.github/workflows/reusable-terraform.yml
     with:
+      environment_name: prod
       command: 'apply'
       working-directory: 'environments/prod/backend'
     secrets: inherit
@@ -109,6 +115,7 @@ jobs:
     needs: apply-prod-route53
     uses: ./.github/workflows/reusable-terraform.yml
     with:
+      environment_name: prod
       command: 'apply'
       working-directory: 'environments/prod/frontend'
     secrets: inherit

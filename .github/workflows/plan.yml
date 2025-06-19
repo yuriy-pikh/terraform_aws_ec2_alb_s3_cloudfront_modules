@@ -9,11 +9,11 @@ on:
       - '.github/workflows/**'
 
 jobs:
-  # --- Integration Environment ---
   plan-integration-route53:
     name: 'Plan: integration/route53_cert'
     uses: ./.github/workflows/reusable-terraform.yml
     with:
+      environment_name: integration
       command: 'plan'
       working-directory: 'environments/integration/route53_cert'
     secrets: inherit
@@ -22,6 +22,7 @@ jobs:
     name: 'Plan: integration/backend'
     uses: ./.github/workflows/reusable-terraform.yml
     with:
+      environment_name: integration
       command: 'plan'
       working-directory: 'environments/integration/backend'
     secrets: inherit
@@ -30,15 +31,16 @@ jobs:
     name: 'Plan: integration/frontend'
     uses: ./.github/workflows/reusable-terraform.yml
     with:
+      environment_name: integration
       command: 'plan'
       working-directory: 'environments/integration/frontend'
     secrets: inherit
 
-  # --- Staging Environment ---
   plan-staging-route53:
     name: 'Plan: staging/route53_cert'
     uses: ./.github/workflows/reusable-terraform.yml
     with:
+      environment_name: staging
       command: 'plan'
       working-directory: 'environments/staging/route53_cert'
     secrets: inherit
@@ -47,6 +49,7 @@ jobs:
     name: 'Plan: staging/backend'
     uses: ./.github/workflows/reusable-terraform.yml
     with:
+      environment_name: staging
       command: 'plan'
       working-directory: 'environments/staging/backend'
     secrets: inherit
@@ -55,15 +58,16 @@ jobs:
     name: 'Plan: staging/frontend'
     uses: ./.github/workflows/reusable-terraform.yml
     with:
+      environment_name: staging
       command: 'plan'
       working-directory: 'environments/staging/frontend'
     secrets: inherit
 
-  # --- Production Environment ---
   plan-prod-network:
     name: 'Plan: prod/network'
     uses: ./.github/workflows/reusable-terraform.yml
     with:
+      environment_name: prod
       command: 'plan'
       working-directory: 'environments/prod/network'
     secrets: inherit
@@ -72,6 +76,7 @@ jobs:
     name: 'Plan: prod/route53_cert'
     uses: ./.github/workflows/reusable-terraform.yml
     with:
+      environment_name: prod
       command: 'plan'
       working-directory: 'environments/prod/route53_cert'
     secrets: inherit
@@ -80,6 +85,7 @@ jobs:
     name: 'Plan: prod/backend'
     uses: ./.github/workflows/reusable-terraform.yml
     with:
+      environment_name: prod
       command: 'plan'
       working-directory: 'environments/prod/backend'
     secrets: inherit
@@ -88,6 +94,7 @@ jobs:
     name: 'Plan: prod/frontend'
     uses: ./.github/workflows/reusable-terraform.yml
     with:
+      environment_name: prod
       command: 'plan'
       working-directory: 'environments/prod/frontend'
     secrets: inherit

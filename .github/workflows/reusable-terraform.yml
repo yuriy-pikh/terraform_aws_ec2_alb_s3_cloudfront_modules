@@ -3,6 +3,10 @@ name: Reusable Terraform Workflow
 on:
   workflow_call:
     inputs:
+      environment_name:
+        description: 'The name of the environment to run in (integration, staging, prod)'
+        required: true
+        type: string
       command:
         description: 'Terraform command to run (plan or apply)'
         required: true
@@ -20,6 +24,7 @@ on:
 jobs:
   terraform:
     name: 'Terraform ${{ inputs.command }} on ${{ inputs.working-directory }}'
+    environment: ${{ inputs.environment_name }}
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -41,6 +46,7 @@ jobs:
         with:
           terraform_version: 1.8.4
 
+      # ... решта кроків залишається без змін ...
       - name: Terraform Init
         id: init
         run: terraform init
@@ -61,7 +67,7 @@ jobs:
           update_comment: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+      
       - name: Terraform Plan Status
         if: steps.plan.outcome == 'failure'
         run: exit 1
