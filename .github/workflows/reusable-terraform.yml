@@ -58,14 +58,12 @@ jobs:
           terraform plan -input=false -no-color -out=tfplan > plan.txt
         continue-on-error: true
 
-      - name: Publish Plan to PR
+      - name: PR comment with file
         if: inputs.command == 'plan'
-        uses: terraform-github-actions/terraform-pr-commenter@v2
+        uses: thollander/actions-comment-pull-request@v3
         with:
-          comment_title: 'Terraform Plan for `${{ inputs.working-directory }}`'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
+          file-path: plan.txt
+            
       - name: Terraform Plan Status
         if: steps.plan.outcome == 'failure'
         run: exit 1
