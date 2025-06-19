@@ -1,0 +1,85 @@
+name: Reusable Terraform Workflow
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: 'Environment to run (integration, staging, prod)'
+        required: true
+        type: string
+      command:
+        description: 'Terraform command to run (plan or apply)'
+        required: true
+        type: string
+      # Тепер ми приймаємо одну директорію за раз
+      working-directory:
+        description: 'The working directory for Terraform commands'
+        required: true
+        type: string
+      pr-number:
+        description: 'The pull request number'
+        required: false 
+        type: string
+
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+      GITHUB_TOKEN:
+        required: true
+
+
+jobs:
+  terraform:
+    name: 'Terraform ${{ inputs.command }} on ${{ inputs.working-directory }}'
+    runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.8.4
+
+      - name: Terraform Init
+        id: init
+        run: terraform init
+
+      - name: Terraform Plan
+        id: plan
+        if: inputs.command == 'plan'
+        run: |
+          terraform plan -input=false -no-color -out=tfplan > plan.txt
+        continue-on-error: true
+
+      - name: Publish Plan to PR
+        if: inputs.command == 'plan'
+        uses: robburger/terraform-pr-commenter@v2
+        with:
+          comment_from_file: ${{ inputs.working-directory }}/plan.txt
+          comment_title: 'Terraform Plan for `${{ inputs.working-directory }}`'
+          update_comment: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Terraform Plan Status
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+
+      - name: Terraform Apply
+        if: inputs.command == 'apply'
+        run: terraform apply -auto-approve -input=false

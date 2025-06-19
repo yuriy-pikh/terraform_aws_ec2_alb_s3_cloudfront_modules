@@ -1,0 +1,116 @@
+# .github/workflows/apply.yml
+
+name: Terraform Apply
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to apply changes to'
+        required: true
+        type: choice
+        options:
+          - integration
+          - staging
+          - prod
+
+jobs:
+  # --- Integration Environment ---
+  apply-integration-route53:
+    name: 'Apply: integration/route53_cert'
+    if: github.event.inputs.environment == 'integration'
+    uses: ./.github/workflows/reusable-terraform.yml
+    with:
+      command: 'apply'
+      working-directory: 'environments/integration/route53_cert'
+    secrets: inherit
+
+  apply-integration-backend:
+    name: 'Apply: integration/backend'
+    if: github.event.inputs.environment == 'integration'
+    needs: apply-integration-route53
+    uses: ./.github/workflows/reusable-terraform.yml
+    with:
+      command: 'apply'
+      working-directory: 'environments/integration/backend'
+    secrets: inherit
+
+  apply-integration-frontend:
+    name: 'Apply: integration/frontend'
+    if: github.event.inputs.environment == 'integration'
+    needs: apply-integration-route53 
+    uses: ./.github/workflows/reusable-terraform.yml
+    with:
+      command: 'apply'
+      working-directory: 'environments/integration/frontend'
+    secrets: inherit
+
+  # --- Staging Environment ---
+  apply-staging-route53:
+    name: 'Apply: staging/route53_cert'
+    if: github.event.inputs.environment == 'staging'
+    uses: ./.github/workflows/reusable-terraform.yml
+    with:
+      command: 'apply'
+      working-directory: 'environments/staging/route53_cert'
+    secrets: inherit
+
+  apply-staging-backend:
+    name: 'Apply: staging/backend'
+    if: github.event.inputs.environment == 'staging'
+    needs: apply-staging-route53
+    uses: ./.github/workflows/reusable-terraform.yml
+    with:
+      command: 'apply'
+      working-directory: 'environments/staging/backend'
+    secrets: inherit
+
+  apply-staging-frontend:
+    name: 'Apply: staging/frontend'
+    if: github.event.inputs.environment == 'staging'
+    needs: apply-staging-route53
+    uses: ./.github/workflows/reusable-terraform.yml
+    with:
+      command: 'apply'
+      working-directory: 'environments/staging/frontend'
+    secrets: inherit
+
+  # --- Production Environment ---
+  apply-prod-network:
+    name: 'Apply: prod/network'
+    if: github.event.inputs.environment == 'prod'
+    uses: ./.github/workflows/reusable-terraform.yml
+    with:
+      command: 'apply'
+      working-directory: 'environments/prod/network'
+    secrets: inherit
+
+  apply-prod-route53:
+    name: 'Apply: prod/route53_cert'
+    if: github.event.inputs.environment == 'prod'
+    needs: apply-prod-network
+    uses: ./.github/workflows/reusable-terraform.yml
+    with:
+      command: 'apply'
+      working-directory: 'environments/prod/route53_cert'
+    secrets: inherit
+
+  apply-prod-backend:
+    name: 'Apply: prod/backend'
+    if: github.event.inputs.environment == 'prod'
+    needs: [apply-prod-network, apply-prod-route53]
+    uses: ./.github/workflows/reusable-terraform.yml
+    with:
+      command: 'apply'
+      working-directory: 'environments/prod/backend'
+    secrets: inherit
+
+  apply-prod-frontend:
+    name: 'Apply: prod/frontend'
+    if: github.event.inputs.environment == 'prod'
+    needs: apply-prod-route53
+    uses: ./.github/workflows/reusable-terraform.yml
+    with:
+      command: 'apply'
+      working-directory: 'environments/prod/frontend'
+    secrets: inherit

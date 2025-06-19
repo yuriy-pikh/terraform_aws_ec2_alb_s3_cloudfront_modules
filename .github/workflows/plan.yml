@@ -1,0 +1,94 @@
+# .github/workflows/plan.yml
+
+name: Terraform Plan
+
+on:
+  pull_request:
+    paths:
+      - 'environments/**'
+      - 'modules/**'
+      - '.github/workflows/**'
+
+jobs:
+  # --- Integration Environment ---
+  plan-integration-route53:
+    name: 'Plan: integration/route53_cert'
+    uses: ./.github/workflows/reusable-terraform.yml
+    with:
+      command: 'plan'
+      working-directory: 'environments/integration/route53_cert'
+    secrets: inherit
+
+  plan-integration-backend:
+    name: 'Plan: integration/backend'
+    uses: ./.github/workflows/reusable-terraform.yml
+    with:
+      command: 'plan'
+      working-directory: 'environments/integration/backend'
+    secrets: inherit
+
+  plan-integration-frontend:
+    name: 'Plan: integration/frontend'
+    uses: ./.github/workflows/reusable-terraform.yml
+    with:
+      command: 'plan'
+      working-directory: 'environments/integration/frontend'
+    secrets: inherit
+
+  # --- Staging Environment ---
+  plan-staging-route53:
+    name: 'Plan: staging/route53_cert'
+    uses: ./.github/workflows/reusable-terraform.yml
+    with:
+      command: 'plan'
+      working-directory: 'environments/staging/route53_cert'
+    secrets: inherit
+
+  plan-staging-backend:
+    name: 'Plan: staging/backend'
+    uses: ./.github/workflows/reusable-terraform.yml
+    with:
+      command: 'plan'
+      working-directory: 'environments/staging/backend'
+    secrets: inherit
+
+  plan-staging-frontend:
+    name: 'Plan: staging/frontend'
+    uses: ./.github/workflows/reusable-terraform.yml
+    with:
+      command: 'plan'
+      working-directory: 'environments/staging/frontend'
+    secrets: inherit
+
+  # --- Production Environment ---
+  plan-prod-network:
+    name: 'Plan: prod/network'
+    uses: ./.github/workflows/reusable-terraform.yml
+    with:
+      command: 'plan'
+      working-directory: 'environments/prod/network'
+    secrets: inherit
+
+  plan-prod-route53:
+    name: 'Plan: prod/route53_cert'
+    uses: ./.github/workflows/reusable-terraform.yml
+    with:
+      command: 'plan'
+      working-directory: 'environments/prod/route53_cert'
+    secrets: inherit
+
+  plan-prod-backend:
+    name: 'Plan: prod/backend'
+    uses: ./.github/workflows/reusable-terraform.yml
+    with:
+      command: 'plan'
+      working-directory: 'environments/prod/backend'
+    secrets: inherit
+
+  plan-prod-frontend:
+    name: 'Plan: prod/frontend'
+    uses: ./.github/workflows/reusable-terraform.yml
+    with:
+      command: 'plan'
+      working-directory: 'environments/prod/frontend'
+    secrets: inherit
