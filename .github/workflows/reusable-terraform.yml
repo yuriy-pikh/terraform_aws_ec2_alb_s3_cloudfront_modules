@@ -3,24 +3,14 @@ name: Reusable Terraform Workflow
 on:
   workflow_call:
     inputs:
-      environment:
-        description: 'Environment to run (integration, staging, prod)'
-        required: true
-        type: string
       command:
         description: 'Terraform command to run (plan or apply)'
         required: true
         type: string
-      # Тепер ми приймаємо одну директорію за раз
       working-directory:
         description: 'The working directory for Terraform commands'
         required: true
         type: string
-      pr-number:
-        description: 'The pull request number'
-        required: false
-        type: string
-
     secrets:
       AWS_ACCESS_KEY_ID:
         required: true
@@ -31,7 +21,6 @@ jobs:
   terraform:
     name: 'Terraform ${{ inputs.command }} on ${{ inputs.working-directory }}'
     runs-on: ubuntu-latest
-
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
