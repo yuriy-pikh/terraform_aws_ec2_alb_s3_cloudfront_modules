@@ -60,11 +60,9 @@ jobs:
 
       - name: Publish Plan to PR
         if: inputs.command == 'plan'
-        uses: robburger/terraform-pr-commenter@v2
+        uses: terraform-github-actions/terraform-pr-commenter@v2
         with:
-          comment_from_file: ${{ inputs.working-directory }}/plan.txt
           comment_title: 'Terraform Plan for `${{ inputs.working-directory }}`'
-          update_comment: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
