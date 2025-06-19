@@ -14,7 +14,7 @@ provider "aws" {
 module "route53_cert_api" {
   source          = "../../../modules/route53_cert"
   env             = "integration"
-  domain_name_api = "api.integration.yuriypikh.site"
+  domain_name_api = "api.integrationtext.yuriypikh.site"
 }
 
 module "route53_cert_app" {
