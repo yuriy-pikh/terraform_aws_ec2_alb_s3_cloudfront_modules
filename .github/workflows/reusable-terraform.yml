@@ -18,7 +18,7 @@ on:
         type: string
       pr-number:
         description: 'The pull request number'
-        required: false 
+        required: false
         type: string
 
     secrets:
@@ -31,7 +31,7 @@ jobs:
   terraform:
     name: 'Terraform ${{ inputs.command }} on ${{ inputs.working-directory }}'
     runs-on: ubuntu-latest
-    
+
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -72,7 +72,7 @@ jobs:
           update_comment: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Terraform Plan Status
         if: steps.plan.outcome == 'failure'
         run: exit 1

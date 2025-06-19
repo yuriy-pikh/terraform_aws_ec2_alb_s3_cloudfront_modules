@@ -1,5 +1,3 @@
-# .github/workflows/apply.yml
-
 name: Terraform Apply
 
 on:
@@ -38,7 +36,7 @@ jobs:
   apply-integration-frontend:
     name: 'Apply: integration/frontend'
     if: github.event.inputs.environment == 'integration'
-    needs: apply-integration-route53 
+    needs: apply-integration-route53
     uses: ./.github/workflows/reusable-terraform.yml
     with:
       command: 'apply'

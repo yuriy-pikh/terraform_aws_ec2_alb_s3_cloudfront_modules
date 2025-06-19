@@ -1,5 +1,3 @@
-# .github/workflows/plan.yml
-
 name: Terraform Plan
 
 on:
